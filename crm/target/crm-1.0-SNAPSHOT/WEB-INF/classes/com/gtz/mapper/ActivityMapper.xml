@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace属性 设置mapper接口的全类名 -->
+<mapper namespace="com.gtz.dao.ActivityDao">
+
+    <!-- resultType属性 用于设置结果类型,即查询的数据要转换为的Java类型
+         resultMap属性 自定义映射,处理一对多或多对一的映射关系
+     -->
+    <sql id="activityColumns">
+        id
+        ,name,owner,start_date,end_date,cost,create_by,create_time,
+        edit_time,edit_by,description
+    </sql>
+
+    <select id="selectActivityByPage" parameterType="map" resultType="activity">
+        select a.id,
+        u.name owner,
+        a.name,
+        a.start_date,
+        a.end_date,
+        u2.name create_by,
+        a.edit_time,
+        u3.name edit_by
+        from t_activity a
+        join t_user u on a.owner = u.name
+        join t_user u2 on a.create_by = u2.id
+        left join t_user u3 on a.edit_by = u3.id
+        <where>
+            <if test="name != null and name != ''">
+                and a.name like "%"#{name}"%"
+            </if>
+            <if test="owner != null and owner != ''">
+                and u.name like "%"#{owner}"%"
+            </if>
+            <if test="startDate != null and startDate != ''">
+                and a.start_date >= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                and a.end_date &lt;= #{endDate}
+            </if>
+        </where>
+        order by a.create_time desc
+        limit #{beginNo},#{pageSize}
+    </select>
+
+    <select id="selectCountActivityByMap" resultType="int" parameterType="map">
+        select count(*)
+        from t_activity a
+        join t_user u on a.owner = u.name
+        join t_user u2 on a.create_by = u2.id
+        left join t_user u3 on a.edit_by = u3.id
+        <where>
+            <if test="name != null and name != ''">
+                and a.name like "%"#{name}"%"
+            </if>
+            <if test="owner != null and owner != ''">
+                and u.name like "%"#{owner}"%"
+            </if>
+            <if test="startDate != null and startDate != ''">
+                and a.start_date >= #{startDate}
+            </if>
+            <if test="endDate != null and endDate != ''">
+                and a.end_date &lt;= #{endDate}
+            </if>
+        </where>
+    </select>
+
+    <select id="selectActivityById" resultType="activity">
+        select a.id,
+               u.name owner,
+               a.name,
+               a.start_date,
+               a.end_date,
+               u2.name create_by,
+               a.edit_time,
+               u3.name edit_by,a.cost,a.create_Time,a.description
+        from t_activity a
+                 join t_user u on a.owner = u.name
+                 join t_user u2 on a.create_by = u2.id
+                 left join t_user u3 on a.edit_by = u3.id
+        where a.id = #{id};
+    </select>
+
+    <select id="selectAllActivity" resultType="activity">
+        select a.id,
+               u.name  owner,
+               a.name,
+               a.start_date,
+               a.end_date,
+               a.create_time,
+               a.cost,
+               a.description,
+               u2.name create_by,
+               a.edit_time,
+               u3.name edit_by
+        from t_activity a
+                 join t_user u on a.owner = u.name
+                 join t_user u2 on a.create_by = u2.id
+                 left join t_user u3 on a.edit_by = u3.id
+        order by a.create_time desc
+    </select>
+
+    <select id="selectActivityByIds" resultType="activity">
+        select a.id,
+        u.name owner,
+        a.name,
+        a.start_date,
+        a.end_date,
+        a.create_time,
+        a.cost,
+        a.description,
+        u2.name create_by,
+        a.edit_time,
+        u3.name edit_by
+        from t_activity a
+        join t_user u on a.owner = u.name
+        join t_user u2 on a.create_by = u2.id
+        left join t_user u3 on a.edit_by = u3.id
+        where a.id in (
+        <foreach collection="array" item="id" separator=",">
+            #{id}
+        </foreach>
+        )
+        order by a.create_time desc
+    </select>
+
+
+    <delete id="deleteActivityByIds" parameterType="string">
+        delete from t_activity where
+        <foreach collection="array" item="id" separator="or">
+            id = #{id}
+        </foreach>
+    </delete>
+
+    <insert id="insertActivityByList" parameterType="activity">
+        insert into t_activity values
+        <foreach collection="list" item="obj" separator=",">
+            (#{obj.id},#{obj.owner},#{obj.name},#{obj.startDate},#{obj.endDate},
+            #{obj.cost},#{obj.description},#{obj.createTime},
+            #{obj.createBy},"","")
+        </foreach>
+    </insert>
+    <!--
+        mapper接口和映射文件要保持两个一致
+         1.mapper接口的全类名和映射文件的namespace一致
+         2.mapper接口中的方法名和映射文件的sql id保持一致
+    -->
+</mapper>
